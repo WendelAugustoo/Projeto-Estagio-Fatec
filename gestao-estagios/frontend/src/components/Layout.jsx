@@ -48,7 +48,6 @@ export default function Layout() {
           </span>
           <div>
             <strong>Gestão de Estágios</strong>
-            <small>Projeto acadêmico demonstrativo</small>
           </div>
         </div>
         <div className="usuario-topo">
@@ -72,7 +71,6 @@ export default function Layout() {
               </li>
             ))}
           </ul>
-          <p className="aviso-menu">Sistema demonstrativo: não substitui SEI, assinatura eletrônica oficial ou deliberações da CESU.</p>
         </nav>
         <main id="conteudo" className="conteudo" tabIndex={-1}>
           <Outlet />

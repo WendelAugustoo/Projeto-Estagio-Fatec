@@ -78,7 +78,7 @@ export default function SolicitacaoForm() {
         <div>
           <h1>{editando ? 'Editar solicitação' : 'Nova solicitação'}</h1>
           <p className="subtitulo">
-            Curso: <strong>{usuario.aluno?.curso_nome}</strong>. Campos com * são exigidos para o envio; você pode salvar o rascunho incompleto.
+            Curso: <strong>{usuario.aluno?.curso_nome}</strong>. Campos com * são exigidos para o envio.
           </p>
         </div>
       </div>
@@ -166,7 +166,7 @@ export default function SolicitacaoForm() {
                   <Campo rotulo="Técnicas, ferramentas e tecnologias" obrigatorio>
                     {(cid) => <textarea id={cid} rows={2} value={form.plano.tecnicas} onChange={setPlano('tecnicas')} />}
                   </Campo>
-                  <Campo rotulo="Compatibilidade com o curso" obrigatorio ajuda="Explique como as atividades se relacionam com as disciplinas do curso (RN-05).">
+                  <Campo rotulo="Compatibilidade com o curso" obrigatorio ajuda="Explique como as atividades se relacionam com as disciplinas do curso.">
                     {(cid) => <textarea id={cid} rows={2} value={form.plano.compatibilidade} onChange={setPlano('compatibilidade')} />}
                   </Campo>
                 </>
