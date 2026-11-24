@@ -1,0 +1,185 @@
+### Coleção de requisições — Sistema de Gestão de Estágios
+### Use com a extensão "REST Client" do VS Code (ou copie para Postman/Insomnia).
+### 1) Execute o login, copie o "token" da resposta e cole em @token.
+
+@base = http://localhost:3000/api
+@token = COLE_O_TOKEN_AQUI
+
+### Login (aluno)
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "aluno@fatec.demo", "senha": "Senha@123" }
+
+### Sessão atual
+GET {{base}}/auth/me
+Authorization: Bearer {{token}}
+
+### Listar solicitações autorizadas (filtros: status, modalidade, curso_id, aluno, fila=1)
+GET {{base}}/solicitacoes?status=EM_CONFERENCIA
+Authorization: Bearer {{token}}
+
+### Criar solicitação (aluno)
+POST {{base}}/solicitacoes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "modalidade": "REGULAR",
+  "concedente_id": 1,
+  "plano": {
+    "descricao": "Desenvolvimento de funcionalidades web",
+    "tecnicas": "React, Node.js, SQL",
+    "compatibilidade": "Disciplinas de Desenvolvimento Web e Banco de Dados",
+    "periodo_inicio": "2027-02-01",
+    "periodo_fim": "2027-07-31",
+    "horas_previstas": 240
+  }
+}
+
+### Consultar dossiê (dados, documentos, pareceres, horas, relatórios, histórico e ações disponíveis)
+GET {{base}}/solicitacoes/9
+Authorization: Bearer {{token}}
+
+### Enviar arquivo (multipart: tipo + arquivo)
+POST {{base}}/solicitacoes/9/documentos
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="tipo"
+
+TCE
+--limite
+Content-Disposition: form-data; name="arquivo"; filename="tce.pdf"
+Content-Type: application/pdf
+
+< ./exemplo.pdf
+--limite--
+
+### Submeter à conferência
+POST {{base}}/solicitacoes/9/enviar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### Demais ações do workflow (Secretaria): iniciar_conferencia, retomar, encaminhar_analise, liberar, concluir, indeferir
+POST {{base}}/solicitacoes/9/acoes/iniciar_conferencia
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### Conferir documento (Secretaria)
+PATCH {{base}}/documentos/1/conferencia
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "REJEITADO", "observacao": "TCE sem assinatura da concedente" }
+
+### Registrar seguro e vias assinadas (Secretaria)
+PATCH {{base}}/solicitacoes/9/conferencia
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "seguro_situacao": "CONTRATADO_CONCEDENTE", "seguro_responsavel": "Empresa X", "ass_aluno": true, "ass_concedente": true }
+
+### Registrar pendência e motivo (devolver)
+POST {{base}}/solicitacoes/9/devolver
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Falta assinatura da concedente no TCE." }
+
+### Encaminhar para análise com professor responsável (Secretaria)
+POST {{base}}/solicitacoes/9/acoes/encaminhar_analise
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "professor_id": 3 }
+
+### Emitir avaliação autorizada — professor: parecer técnico
+POST {{base}}/solicitacoes/9/pareceres
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "resultado": "FAVORAVEL", "motivo": "PAE compatível com o curso." }
+
+### Emitir avaliação — coordenação: aprovar PAE (regular)
+POST {{base}}/solicitacoes/9/pareceres
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "acao": "aprovar_plano", "motivo": "Compatível com o PPC." }
+
+### Emitir avaliação — coordenação: decisão de equivalência/equiparação
+POST {{base}}/solicitacoes/3/pareceres
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "resultado": "DEFERIDO_PARCIAL", "horas_reconhecidas": 160, "motivo": "Parte das atividades é compatível." }
+
+### Direção: registrar assinatura (simulação)
+POST {{base}}/solicitacoes/6/acoes/assinar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### Registrar horas (aluno)
+POST {{base}}/solicitacoes/7/horas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "data": "2026-11-20", "horas": 4, "descricao": "Revisão de código" }
+
+### Validar horas (professor)
+PATCH {{base}}/horas/1/validacao
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "validado": "VALIDADO" }
+
+### Submeter relatório (multipart: tipo PARCIAL|FINAL, periodo, arquivo)
+POST {{base}}/solicitacoes/7/relatorios
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="tipo"
+
+PARCIAL
+--limite
+Content-Disposition: form-data; name="periodo"
+
+1º trimestre
+--limite
+Content-Disposition: form-data; name="arquivo"; filename="relatorio.pdf"
+Content-Type: application/pdf
+
+< ./exemplo.pdf
+--limite--
+
+### Avaliar relatório (professor)
+PATCH {{base}}/relatorios/1/avaliacao
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado": "DEVOLVIDO", "observacao": "Faltam evidências das atividades." }
+
+### Consultar trilha de ações
+GET {{base}}/solicitacoes/9/historico
+Authorization: Bearer {{token}}
+
+### Resumo em PDF
+GET {{base}}/solicitacoes/9/pdf
+Authorization: Bearer {{token}}
+
+### Painel
+GET {{base}}/dashboard
+Authorization: Bearer {{token}}
+
+### Auditoria (admin, coordenação, direção)
+GET {{base}}/auditoria?entidade=solicitacao&entidade_id=9
+Authorization: Bearer {{token}}

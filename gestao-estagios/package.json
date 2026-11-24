@@ -1,0 +1,16 @@
+{
+  "name": "gestao-estagios",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema Web de Gestão de Estágios Supervisionados — projeto acadêmico (frontend + backend)",
+  "scripts": {
+    "postinstall": "node scripts/instalar-tudo.js",
+    "dev": "concurrently -k -n API,WEB -c blue,green \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "start": "concurrently -k -n API,WEB -c blue,green \"npm --prefix backend start\" \"npm --prefix frontend run dev\"",
+    "seed": "npm --prefix backend run seed",
+    "test": "npm --prefix backend test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
+  }
+}
