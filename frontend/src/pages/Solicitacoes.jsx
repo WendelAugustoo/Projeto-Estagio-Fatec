@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../services/auth';
 import { fmtDataHora } from '../services/format';
-import { Campo, Carregando, ErroBox, StatusBadge, Vazio } from '../components/ui';
+import { Campo, Carregando, ErroBox, PrazoBadge, StatusBadge, Vazio } from '../components/ui';
 
 /** RF-09: pesquisa por status, curso, aluno e modalidade. */
 export default function Solicitacoes() {
@@ -156,7 +156,7 @@ export default function Solicitacoes() {
                       {!aluno && <td data-rotulo="Curso">{s.curso_nome}</td>}
                       <td data-rotulo="Modalidade">{dominios.modalidades[s.modalidade]}</td>
                       <td data-rotulo="Situação">
-                        <StatusBadge status={s.status} />
+                        <StatusBadge status={s.status} /> <PrazoBadge expirado={s.prazo_expirado} />
                       </td>
                       <td data-rotulo="Responsável">{s.professor_nome || '—'}</td>
                       <td data-rotulo="Atualizada">{fmtDataHora(s.atualizada_em)}</td>

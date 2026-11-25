@@ -94,7 +94,7 @@ function listar(user, filtros = {}) {
       const acoes = acoesDisponiveis(user, ctx).filter(
         (a) => !a.secundaria && a.bloqueios.length === 0 && !(a.acao === 'parecer_tecnico' && parecerTecnicoJaEmitido(ctx))
       );
-      return { ...l, requer_minha_acao: acoes.length > 0 || tarefasOperacionais(user, ctx) > 0 };
+      return { ...l, requer_minha_acao: acoes.length > 0 || tarefasOperacionais(user, ctx) > 0, prazo_expirado: R.situacaoPrazos(ctx).expirado };
     })
     .filter((l) => filtros.fila !== '1' || l.requer_minha_acao);
 }
@@ -149,7 +149,8 @@ function detalhar(user, id) {
       validadas: R.horasValidadas(ctx),
       parciais_exigidos: sol.modalidade === 'REGULAR' ? R.parciaisExigidos(ctx.plano) : 0,
     },
-    pendencias: user.perfil === 'ALUNO' || user.perfil === 'SECRETARIA' ? R.pendencias(ctx) : [],
+    pendencias: R.pendencias(ctx),
+    prazos: R.situacaoPrazos(ctx),
     acoes: acoesDisponiveis(user, ctx),
     permissoes,
     tipos_documento_permitidos: C.DOCUMENTOS_POR_MODALIDADE[sol.modalidade],
@@ -432,7 +433,7 @@ function avaliarRelatorio(user, relatorioId, body) {
         .run(rel.solicitacao_id, user.id, 'FINAL', body.estado === 'APROVADO' ? 'RELATORIO_FINAL_APROVADO' : 'RELATORIO_FINAL_DEVOLVIDO', observacao || 'Relatório final aprovado.', now());
     }
     if (body.estado === 'DEVOLVIDO' && rel.tipo === 'FINAL' && ctx.sol.status === 'EM_AVALIACAO_FINAL') {
-      conn.prepare("UPDATE solicitacao SET retorno_status = 'EM_AVALIACAO_FINAL' WHERE id = ?").run(ctx.sol.id);
+      conn.prepare("UPDATE solicitacao SET retorno_status = 'EM_AVALIACAO_FINAL', prazo_correcao = ? WHERE id = ?").run(R.calcularPrazoCorrecao(), ctx.sol.id);
       registrarTransicao(conn, ctx, user, 'devolver_relatorio', 'AGUARDANDO_CORRECAO', `Relatório final devolvido: ${observacao}`);
     }
     return { id: rel.id, estado: body.estado };

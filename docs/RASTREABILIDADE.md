@@ -40,6 +40,17 @@ Legenda de evidência: **T** = teste automatizado em `backend/tests/aceite.test.
 | RN-15 | Upload validado (formato, tamanho, tipo, titularidade) | `middlewares/upload.js` (extensão + MIME + assinatura binária + 5 MB), tipos por modalidade — T |
 | RN-16 | Sem assinatura oficial, convênio automático ou SEI | Avisos na interface, no PDF e no README |
 
+## Exceções do fluxo (seção 4.1)
+
+| Exceção | Onde | Evidência |
+|---|---|---|
+| Matrícula irregular | `regraMatricula` | T CA-01 |
+| Documentação ausente ou inválida | `regraDocumentos`, `regraConferenciaDocumentos`, rejeição com motivo | T CA-02, CA-03 |
+| PAE incompatível | `devolver` com parecer técnico | T CA-05 |
+| Assinatura pendente | `regraAssinaturasAnteriores` | T RN-07 |
+| **Prazo expirado** | `regras.regraPrazoInicio` (início vencido bloqueia enviar/reenviar/encaminhar/aprovar/assinar), `prazo_correcao` definido na devolução (`PRAZO_CORRECAO_DIAS`), ação `encerrar_prazo` da Secretaria, `prazoRelatorioFinalExpirado`; selo “Prazo expirado” na interface | T “Prazo expirado” (4 testes), D (João e Larissa) |
+| Relatório devolvido | `avaliarRelatorio` → correção | T CA-10 |
+
 ## Requisitos não funcionais
 
 | ID | Como foi atendido |
@@ -68,6 +79,6 @@ Legenda de evidência: **T** = teste automatizado em `backend/tests/aceite.test.
 | CA-09 processo de outro aluno | 404 em detalhe, PDF, download e horas | `CA-09` ✔ |
 | CA-10 relatório final devolvido | Pendência no painel; conclusão bloqueada; fluxo de correção até concluir | `CA-10` ✔ |
 | CA-11 mudança de status | Histórico com ator, data, motivo e transição | `CA-11` ✔ |
-| CA-12 tela estreita | Tabelas em cartões; sem rolagem horizontal (verificado em 375 px) | D |
+| CA-12 tela estreita | Tabelas em cartões quando o espaço é estreito; sem rolagem horizontal (verificado em 375 px e 1024 px) | D |
 
-Resultado da última execução: **22 testes, 22 aprovados, 0 falhas**.
+Resultado da última execução: **26 testes, 26 aprovados, 0 falhas** (também executados no GitHub Actions a cada push).

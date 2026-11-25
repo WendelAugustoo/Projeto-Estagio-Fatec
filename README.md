@@ -92,6 +92,8 @@ Senha de **todos** os usuários: `Senha@123` (a tela de login também lista as c
 | Aluno | `aluno5@fatec.demo` | Felipe — equivalência em conferência pela Secretaria |
 | Aluno | `aluno6@fatec.demo` | Gabriel — estágio regular enviado |
 | Aluno | `aluno7@fatec.demo` | Isabela — estágio aguardando assinatura da Direção |
+| Aluno | `aluno8@fatec.demo` | João — devolvido para correção, **prazo de correção expirado** |
+| Aluno | `aluno9@fatec.demo` | Larissa — em conferência, **data de início do estágio já vencida** |
 | Secretaria | `secretaria@fatec.demo` | |
 | Professor | `professor@fatec.demo` | Prof. Carlos (responsável pela maioria dos casos) |
 | Professor | `professora2@fatec.demo` | Profa. Helena |
@@ -123,6 +125,8 @@ Outros cenários prontos:
 - **CA-08** — equivalência do Felipe: concluir a conferência, emitir parecer e deferir parcialmente com horas.
 - **CA-09** — como Ana, acesse `http://localhost:5173/solicitacoes/7` (do Diego): “não encontrada ou sem permissão”.
 - **CA-12** — reduza a janela ou use o modo celular do navegador: tabelas viram cartões, sem rolagem horizontal.
+- **Prazo expirado (início)** — `secretaria@fatec.demo`: na fila, a solicitação da **Larissa** tem o selo “Prazo expirado”. Tente *Encaminhar para análise*: fica bloqueado; use *Devolver para correção*.
+- **Prazo expirado (correção)** — `secretaria@fatec.demo`: abra a solicitação do **João** (prazo de correção vencido) → *Encerrar por prazo expirado*, com motivo.
 
 ## Estrutura do projeto
 
@@ -183,13 +187,25 @@ Rascunho → Enviado → Em conferência → Em análise acadêmica ─┬→ Ag
 - Devoluções feitas na conferência, análise ou assinatura voltam para a **conferência** após o reenvio; devolução do relatório final volta para a **avaliação final**.
 - A tela de detalhe mostra cada ação disponível e, quando bloqueada, **o motivo** (ex.: documento faltante, matrícula irregular, assinatura pendente). O servidor revalida tudo ao executar.
 
+### Prazo expirado (exceção da seção 4.1)
+
+O PDF lista “prazo expirado” entre as exceções do fluxo, sem definir valores. O sistema trata três situações, com prazos **configuráveis** (os valores padrão são de demonstração, não normas oficiais):
+
+| Situação | O que o sistema faz |
+|---|---|
+| **Início do estágio vencido** (estágio regular ainda não formalizado) | Bloqueia *enviar*, *reenviar*, *encaminhar para análise*, *aprovar PAE* e *assinar*. Mostra o selo “Prazo expirado” e orienta a devolver ao aluno para ajustar o período. O TCE precisa ser assinado antes do início, e não há estágio retroativo. Antecedência mínima: `ANTECEDENCIA_MINIMA_DIAS` (padrão 0). |
+| **Prazo de correção vencido** | Ao devolver uma solicitação, o sistema define o prazo de correção (`PRAZO_CORRECAO_DIAS`, padrão 15 dias) e mostra “Corrija até DD/MM”. Depois do vencimento aparece o selo “Prazo expirado” e a Secretaria passa a poder **Encerrar por prazo expirado** (cancela com motivo registrado no histórico). O sistema não cancela sozinho: o aluno ainda pode reenviar até a Secretaria decidir. |
+| **Período encerrado sem relatório final** | Pendência “Prazo expirado: o período do estágio terminou…” e selo na lista. |
+
 ## Testes automatizados
 
 ```bash
 npm test
 ```
 
-São 22 testes em `backend/tests/aceite.test.js`, que sobem a API com banco e uploads temporários e cobrem os critérios **CA-01 a CA-12**, além de RN-07, RN-08, RN-10, RN-12, RN-15, horas, relatórios, PDF e permissões. Resultado esperado: `# pass 22` / `# fail 0`.
+São 26 testes em `backend/tests/aceite.test.js`, que sobem a API com banco e uploads temporários e cobrem os critérios **CA-01 a CA-12**, além de RN-07, RN-08, RN-10, RN-12, RN-15, prazo expirado, horas, relatórios, PDF e permissões. Resultado esperado: `# pass 26` / `# fail 0`.
+
+O mesmo conjunto roda automaticamente no **GitHub Actions** (`.github/workflows/ci.yml`) a cada push, junto com o build do frontend.
 
 ## Variáveis de ambiente
 
@@ -204,6 +220,8 @@ Todas opcionais (há valores padrão para demonstração local):
 | `UPLOAD_DIR` | `backend/uploads` | Diretório privado dos anexos |
 | `MAX_UPLOAD_MB` | `5` | Tamanho máximo por arquivo |
 | `CORS_ORIGIN` | `http://localhost:5173` | Origem(ns) permitidas, separadas por vírgula |
+| `PRAZO_CORRECAO_DIAS` | `15` | Dias para o aluno corrigir uma solicitação devolvida |
+| `ANTECEDENCIA_MINIMA_DIAS` | `0` | Antecedência mínima entre o envio/formalização e o início do estágio regular |
 
 ## Limitações e diferenças em relação ao escopo
 
@@ -216,6 +234,7 @@ Todas opcionais (há valores padrão para demonstração local):
 - Após o reenvio de uma correção documental ou acadêmica, a solicitação sempre passa de novo pela conferência da Secretaria.
 - Reabertura de solicitações encerradas não foi implementada (a especificação prevê apenas “fluxo administrativo explícito”).
 - Intervalo de relatórios parciais calculado em blocos de 183 dias (≈ 6 meses).
+- Os prazos (15 dias para correção, antecedência mínima 0) são valores de demonstração e devem ser definidos pela instituição.
 
 **(c) Integrações representadas por dados fictícios:** SEI, sistema acadêmico, cadastro de convênios, SSO e assinatura digital **não** são integrados.
 

@@ -9,6 +9,8 @@ const CONTAS_DEMO = [
   { email: 'aluno2@fatec.demo', papel: 'Aluno', obs: 'Carla — equiparação em curso sem previsão no PPC (CA-07)' },
   { email: 'aluno3@fatec.demo', papel: 'Aluno', obs: 'Diego — estágio em execução (horas e relatórios)' },
   { email: 'aluno4@fatec.demo', papel: 'Aluno', obs: 'Elisa — estágio em avaliação final' },
+  { email: 'aluno8@fatec.demo', papel: 'Aluno', obs: 'João — prazo de correção expirado' },
+  { email: 'aluno9@fatec.demo', papel: 'Aluno', obs: 'Larissa — data de início do estágio já vencida' },
   { email: 'secretaria@fatec.demo', papel: 'Secretaria', obs: '' },
   { email: 'professor@fatec.demo', papel: 'Professor', obs: 'Prof. Carlos' },
   { email: 'coordenacao@fatec.demo', papel: 'Coordenação', obs: '' },

@@ -58,6 +58,7 @@ erDiagram
         text modalidade
         text status
         text retorno_status
+        text prazo_correcao
         int concedente_id FK
         int professor_id FK
         text seguro_situacao
@@ -142,7 +143,7 @@ erDiagram
 | `aluno` | Dados acadêmicos do aluno | `situacao_matricula` REGULAR/IRREGULAR (RN-01) |
 | `curso` | Cursos | `permite_equiparacao` representa a previsão no PPC (RN-12) |
 | `concedente` | Empresas concedentes | Situação de convênio apenas declarada (validação humana) |
-| `solicitacao` | Processo de estágio/equivalência/equiparação | `status` segue a máquina de estados; `retorno_status` indica a etapa que recebe o reenvio; campos de seguro e assinaturas só são alterados pela Secretaria/Coordenação/Direção |
+| `solicitacao` | Processo de estágio/equivalência/equiparação | `status` segue a máquina de estados; `retorno_status` indica a etapa que recebe o reenvio; `prazo_correcao` guarda a data-limite da correção (prazo expirado); campos de seguro e assinaturas só são alterados pela Secretaria/Coordenação/Direção |
 | `plano_atividade` | PAE ou descrição das atividades | 1:1 com a solicitação (RN-05, RN-11) |
 | `documento` | Metadados dos anexos | Arquivo em diretório privado com nome aleatório (`caminho_seguro`); nova versão marca a anterior como SUBSTITUIDO (CA-04) |
 | `parecer` | Pareceres técnico, acadêmico e de avaliação final | Justificativa obrigatória (RN-13) |

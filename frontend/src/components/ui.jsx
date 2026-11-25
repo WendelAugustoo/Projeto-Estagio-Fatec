@@ -7,6 +7,16 @@ export function StatusBadge({ status }) {
   return <span className={`selo selo-${corStatus(status)}`}>{dominios?.status[status] || status}</span>;
 }
 
+/** Selo exibido quando algum prazo da solicitação venceu (exceção "prazo expirado"). */
+export function PrazoBadge({ expirado, titulo = 'Algum prazo desta solicitação venceu' }) {
+  if (!expirado) return null;
+  return (
+    <span className="selo selo-alerta" title={titulo}>
+      <span aria-hidden="true">⏰ </span>Prazo expirado
+    </span>
+  );
+}
+
 /** Mensagem de erro acessível, com lista de pendências de regra quando houver. */
 export function ErroBox({ erro, titulo }) {
   if (!erro) return null;

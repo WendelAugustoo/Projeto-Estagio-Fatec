@@ -11,7 +11,16 @@ function getDb() {
   db = new DatabaseSync(DB_FILE);
   db.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
   db.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
+  migrar(db);
   return db;
+}
+
+/** Migrações simples para bancos criados por versões anteriores (sem precisar recriar). */
+function migrar(conn) {
+  const colunas = conn.prepare('PRAGMA table_info(solicitacao)').all().map((c) => c.name);
+  if (!colunas.includes('prazo_correcao')) {
+    conn.exec('ALTER TABLE solicitacao ADD COLUMN prazo_correcao TEXT');
+  }
 }
 
 /** Executa fn dentro de uma transação (RNF-05). Reverte em caso de erro. */

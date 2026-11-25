@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../services/auth';
 import { fmtDataHora } from '../services/format';
-import { Carregando, ErroBox, StatusBadge, Vazio } from '../components/ui';
+import { Carregando, ErroBox, PrazoBadge, StatusBadge, Vazio } from '../components/ui';
 
 function TabelaSolicitacoes({ itens, mostrarAluno }) {
   const { dominios } = useAuth();
@@ -29,7 +29,7 @@ function TabelaSolicitacoes({ itens, mostrarAluno }) {
               {mostrarAluno && <td data-rotulo="Aluno">{s.aluno_nome}</td>}
               <td data-rotulo="Modalidade">{dominios.modalidades[s.modalidade]}</td>
               <td data-rotulo="Situação">
-                <StatusBadge status={s.status} />
+                <StatusBadge status={s.status} /> <PrazoBadge expirado={s.prazo_expirado} />
               </td>
               <td data-rotulo="Atualizada">{fmtDataHora(s.atualizada_em)}</td>
             </tr>

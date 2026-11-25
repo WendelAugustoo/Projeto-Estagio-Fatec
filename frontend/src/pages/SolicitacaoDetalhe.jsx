@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api, baixarArquivo } from '../services/api';
 import { useAuth } from '../services/auth';
 import { fmtDataHora, fmtDia } from '../services/format';
-import { Carregando, ErroBox, StatusBadge, Sucesso } from '../components/ui';
+import { Carregando, ErroBox, PrazoBadge, StatusBadge, Sucesso } from '../components/ui';
 import Acoes from '../components/detalhe/Acoes';
 import Documentos from '../components/detalhe/Documentos';
 import Execucao from '../components/detalhe/Execucao';
@@ -98,11 +98,17 @@ export default function SolicitacaoDetalhe() {
       <div className="cabecalho-pagina">
         <div>
           <h1>
-            {s.protocolo || `Rascunho #${s.id}`} <StatusBadge status={s.status} />
+            {s.protocolo || `Rascunho #${s.id}`} <StatusBadge status={s.status} /> <PrazoBadge expirado={dados.prazos?.expirado} />
           </h1>
           <p className="subtitulo">
             {dominios.modalidades[s.modalidade]} · {s.aluno_nome} ({s.matricula}) · {s.curso_nome}
           </p>
+          {dados.prazos?.prazo_correcao && (
+            <p className={`prazo-correcao ${dados.prazos.correcao_expirada ? 'vencido' : ''}`}>
+              {dados.prazos.correcao_expirada ? 'Prazo de correção venceu em ' : 'Prazo para correção: até '}
+              <strong>{fmtDia(dados.prazos.prazo_correcao)}</strong>
+            </p>
+          )}
         </div>
         <div className="botoes-cabecalho">
           {dados.permissoes.editar && (

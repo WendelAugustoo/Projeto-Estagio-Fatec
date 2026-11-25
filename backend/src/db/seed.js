@@ -52,6 +52,8 @@ function seed(db) {
   const felipe = aluno('Felipe Araújo', 'aluno5@fatec.demo', '2023300006', cGE);
   const gabriel = aluno('Gabriel Nunes', 'aluno6@fatec.demo', '2024100007', cDSM);
   const isabela = aluno('Isabela Ramos', 'aluno7@fatec.demo', '2023200008', cADS);
+  const joao = aluno('João Pereira', 'aluno8@fatec.demo', '2024100009', cDSM);
+  const larissa = aluno('Larissa Gomes', 'aluno9@fatec.demo', '2024200010', cADS);
   void ana;
 
   /* ---------------- concedentes ---------------- */
@@ -233,6 +235,33 @@ function seed(db) {
     s8, '1º trimestre', dp, prof, tsRel(-100), tsRel(-95));
   const df = doc(s8, 'RELATORIO_FINAL', elisa.uid, -3);
   ins("INSERT INTO relatorio (solicitacao_id, tipo, periodo, arquivo_id, enviado_em) VALUES (?, 'FINAL', ?, ?, ?)", s8, 'Período completo', df, tsRel(-3));
+
+  /* 9) João — devolvido para correção há 20 dias: prazo de correção expirado */
+  const s9 = solicitacao(joao, 'REGULAR', 'AGUARDANDO_CORRECAO', { concedente_id: pixel, criada: -25, enviada: -23, atualizada: -20 }, {
+    ...paeDev, periodo_inicio: diaRel(30), periodo_fim: diaRel(210),
+  });
+  db.prepare("UPDATE solicitacao SET retorno_status = 'EM_CONFERENCIA', prazo_correcao = ? WHERE id = ?").run(diaRel(-5), s9);
+  const tceJoao = doc(s9, 'TCE', joao.uid, -24, 'REJEITADO', secretaria);
+  db.prepare("UPDATE documento SET observacao = 'TCE sem assinatura da concedente.' WHERE id = ?").run(tceJoao);
+  doc(s9, 'PAE', joao.uid, -24, 'CONFERIDO', secretaria);
+  hist(s9, [
+    [null, 'RASCUNHO', 'criar', joao.uid, -25],
+    ['RASCUNHO', 'ENVIADO', 'enviar', joao.uid, -23],
+    ['ENVIADO', 'EM_CONFERENCIA', 'iniciar_conferencia', secretaria, -22],
+    ['EM_CONFERENCIA', 'AGUARDANDO_CORRECAO', 'devolver', secretaria, -20, 'TCE sem assinatura da concedente. Envie nova versão assinada.'],
+  ]);
+
+  /* 10) Larissa — em conferência, mas a data de início do estágio já passou (prazo expirado) */
+  const s10 = solicitacao(larissa, 'REGULAR', 'EM_CONFERENCIA', { concedente_id: tech, criada: -12, enviada: -10, atualizada: -9 }, {
+    ...paeDev, periodo_inicio: diaRel(-3), periodo_fim: diaRel(177),
+  });
+  doc(s10, 'TCE', larissa.uid, -11);
+  doc(s10, 'PAE', larissa.uid, -11);
+  hist(s10, [
+    [null, 'RASCUNHO', 'criar', larissa.uid, -12],
+    ['RASCUNHO', 'ENVIADO', 'enviar', larissa.uid, -10],
+    ['ENVIADO', 'EM_CONFERENCIA', 'iniciar_conferencia', secretaria, -9],
+  ]);
 
   return { admin };
 }

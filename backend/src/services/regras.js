@@ -4,6 +4,7 @@
  */
 const { DOCUMENTOS_OBRIGATORIOS, TIPOS_DOCUMENTO, TIPOS_RELATORIO_DOC, STATUS_FINAIS } = require('./constants');
 const { documentosVigentes } = require('./contexto');
+const { ANTECEDENCIA_MINIMA_DIAS, PRAZO_CORRECAO_DIAS } = require('../config');
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 const SEIS_MESES_DIAS = 183;
@@ -12,6 +13,70 @@ const vazio = (v) => v === undefined || v === null || String(v).trim() === '';
 
 function diasEntre(inicio, fim) {
   return Math.round((new Date(fim + 'T00:00:00Z') - new Date(inicio + 'T00:00:00Z')) / DIA_MS);
+}
+
+/* ------------------------------------------------------------------ prazos */
+
+/** Data de hoje (AAAA-MM-DD) no fuso de São Paulo. */
+const hojeLocal = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+/** Soma dias a uma data AAAA-MM-DD. */
+function somarDias(dia, n) {
+  const d = new Date(dia + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+const fmtDia = (d) => d.split('-').reverse().join('/');
+
+/** Estados em que o estágio regular ainda não foi formalizado (o TCE precisa ser assinado antes do início). */
+const ANTES_DA_FORMALIZACAO = ['RASCUNHO', 'ENVIADO', 'EM_CONFERENCIA', 'AGUARDANDO_CORRECAO', 'REENVIADO', 'EM_ANALISE_ACADEMICA', 'AGUARDANDO_ASSINATURA'];
+
+/** Data-limite para a correção, contada a partir da devolução. */
+const calcularPrazoCorrecao = (hoje = hojeLocal()) => somarDias(hoje, PRAZO_CORRECAO_DIAS);
+
+/**
+ * Prazo expirado — início do estágio: o estágio regular não pode ser formalizado
+ * com a data de início já vencida (não há estágio retroativo).
+ */
+function regraPrazoInicio(ctx, hoje = hojeLocal()) {
+  const inicio = ctx.plano.periodo_inicio;
+  if (ctx.sol.modalidade !== 'REGULAR' || vazio(inicio)) return [];
+  const limite = somarDias(hoje, ANTECEDENCIA_MINIMA_DIAS);
+  if (inicio < limite) {
+    const antecedencia = ANTECEDENCIA_MINIMA_DIAS > 0 ? ` (antecedência mínima de ${ANTECEDENCIA_MINIMA_DIAS} dia(s))` : '';
+    return [`Prazo expirado: a data de início do estágio (${fmtDia(inicio)}) já passou${antecedencia}. O aluno deve ajustar o período do PAE e do TCE.`];
+  }
+  return [];
+}
+
+/** Prazo expirado — correção: o aluno não corrigiu dentro do prazo após a devolução. */
+function prazoCorrecaoExpirado(ctx, hoje = hojeLocal()) {
+  return ctx.sol.status === 'AGUARDANDO_CORRECAO' && !vazio(ctx.sol.prazo_correcao) && hoje > ctx.sol.prazo_correcao;
+}
+
+/** Prazo expirado — relatório final: o período terminou e o relatório final não foi enviado. */
+function prazoRelatorioFinalExpirado(ctx, hoje = hojeLocal()) {
+  return (
+    ctx.sol.status === 'EM_EXECUCAO' &&
+    !vazio(ctx.plano.periodo_fim) &&
+    hoje > ctx.plano.periodo_fim &&
+    !ctx.relatorios.some((r) => r.tipo === 'FINAL' && !['DEVOLVIDO', 'SUBSTITUIDO'].includes(r.estado_avaliacao))
+  );
+}
+
+/** Resumo dos prazos usado pela interface (selo "Prazo expirado"). */
+function situacaoPrazos(ctx, hoje = hojeLocal()) {
+  const inicioExpirado = ANTES_DA_FORMALIZACAO.includes(ctx.sol.status) && regraPrazoInicio(ctx, hoje).length > 0;
+  const correcaoExpirada = prazoCorrecaoExpirado(ctx, hoje);
+  const relatorioExpirado = prazoRelatorioFinalExpirado(ctx, hoje);
+  return {
+    prazo_correcao: ctx.sol.status === 'AGUARDANDO_CORRECAO' ? ctx.sol.prazo_correcao || null : null,
+    inicio_expirado: inicioExpirado,
+    correcao_expirada: correcaoExpirada,
+    relatorio_final_expirado: relatorioExpirado,
+    expirado: inicioExpirado || correcaoExpirada || relatorioExpirado,
+  };
 }
 
 /** RN-01: matrícula irregular bloqueia estágio regular. */
@@ -65,7 +130,7 @@ function regraDocumentos(ctx) {
 
 /** Completude exigida para enviar/reenviar à conferência. */
 function regraCompletude(ctx) {
-  return [...regraMatricula(ctx), ...regraDadosPlano(ctx), ...regraDocumentos(ctx)];
+  return [...regraMatricula(ctx), ...regraDadosPlano(ctx), ...regraPrazoInicio(ctx), ...regraDocumentos(ctx)];
 }
 
 /** RN-10: só um estágio regular ativo por vez. `outras` = demais solicitações do aluno. */
@@ -159,12 +224,21 @@ function horasValidadas(ctx) {
 }
 
 /** Pendências exibidas no painel do aluno e no detalhe da solicitação. */
-function pendencias(ctx, hoje = new Date().toISOString().slice(0, 10)) {
+function pendencias(ctx, hoje = hojeLocal()) {
   const { sol } = ctx;
   const lista = [];
-  if (sol.status === 'AGUARDANDO_CORRECAO') lista.push('Solicitação devolvida para correção — veja o motivo no histórico e reenvie.');
+  if (sol.status === 'AGUARDANDO_CORRECAO') {
+    if (prazoCorrecaoExpirado(ctx, hoje)) {
+      lista.push(`Prazo de correção expirado em ${fmtDia(sol.prazo_correcao)}. O aluno ainda pode reenviar, mas a Secretaria pode encerrar a solicitação por prazo expirado.`);
+    } else {
+      lista.push(`Solicitação devolvida para correção — veja o motivo no histórico e reenvie${sol.prazo_correcao ? ` até ${fmtDia(sol.prazo_correcao)}` : ''}.`);
+    }
+  }
   if (['RASCUNHO', 'AGUARDANDO_CORRECAO'].includes(sol.status) && sol.retorno_status !== 'EM_AVALIACAO_FINAL') {
     lista.push(...regraCompletude(ctx));
+  } else if (ANTES_DA_FORMALIZACAO.includes(sol.status)) {
+    // Em análise: avisa a Secretaria/avaliadores que o início venceu e o pedido precisa voltar ao aluno.
+    lista.push(...regraPrazoInicio(ctx, hoje).map((m) => `${m} Devolva a solicitação para correção.`));
   }
   for (const r of ctx.relatorios.filter((x) => x.estado_avaliacao === 'DEVOLVIDO')) {
     lista.push(`Relatório ${r.tipo.toLowerCase()} (${r.periodo}) devolvido: ${r.observacao || 'sem observação'}. Envie nova versão.`);
@@ -176,8 +250,10 @@ function pendencias(ctx, hoje = new Date().toISOString().slice(0, 10)) {
     const dias = diasEntre(ctx.plano.periodo_inicio, hoje);
     const venceram = Math.min(Math.floor(dias / SEIS_MESES_DIAS), parciaisExigidos(ctx.plano));
     if (relatoriosValidos(ctx, 'PARCIAL').length < venceram) lista.push('Relatório parcial vencido: envie o relatório periódico (intervalo máximo de seis meses — RN-09).');
-    if (!vazio(ctx.plano.periodo_fim) && hoje >= ctx.plano.periodo_fim && !relatoriosValidos(ctx, 'FINAL').length) {
-      lista.push('Período do estágio encerrado: envie o relatório final.');
+    if (prazoRelatorioFinalExpirado(ctx, hoje)) {
+      lista.push(`Prazo expirado: o período do estágio terminou em ${fmtDia(ctx.plano.periodo_fim)} e o relatório final ainda não foi enviado.`);
+    } else if (hoje === ctx.plano.periodo_fim && !relatoriosValidos(ctx, 'FINAL').length) {
+      lista.push('Último dia do estágio: envie o relatório final.');
     }
   }
   return [...new Set(lista)];
@@ -200,4 +276,12 @@ module.exports = {
   regraConclusao,
   horasValidadas,
   pendencias,
+  hojeLocal,
+  somarDias,
+  fmtDia,
+  calcularPrazoCorrecao,
+  regraPrazoInicio,
+  prazoCorrecaoExpirado,
+  prazoRelatorioFinalExpirado,
+  situacaoPrazos,
 };

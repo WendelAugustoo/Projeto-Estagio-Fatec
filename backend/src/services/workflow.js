@@ -78,7 +78,7 @@ const ACOES = {
     de: ['EM_CONFERENCIA'],
     permitido: (user) => temPerfil(user, 'SECRETARIA'),
     campos: ['professor_id'],
-    bloqueios: (ctx) => [...R.regraMatricula(ctx), ...R.regraConferenciaDocumentos(ctx), ...R.regraSeguro(ctx)],
+    bloqueios: (ctx) => [...R.regraMatricula(ctx), ...R.regraConferenciaDocumentos(ctx), ...R.regraSeguro(ctx), ...R.regraPrazoInicio(ctx)],
     validar: (ctx, payload) => {
       const professorId = Number(payload.professor_id || ctx.sol.professor_id);
       if (!professorId) return ['Selecione o professor responsável pela análise.'];
@@ -114,7 +114,8 @@ const ACOES = {
     destino: () => 'AGUARDANDO_CORRECAO',
     efeito: (conn, ctx, user, payload) => {
       const retorno = ctx.sol.status === 'EM_AVALIACAO_FINAL' ? 'EM_AVALIACAO_FINAL' : 'EM_CONFERENCIA';
-      conn.prepare('UPDATE solicitacao SET retorno_status = ? WHERE id = ?').run(retorno, ctx.sol.id);
+      // Prazo para o aluno corrigir, contado a partir da devolução.
+      conn.prepare('UPDATE solicitacao SET retorno_status = ?, prazo_correcao = ? WHERE id = ?').run(retorno, R.calcularPrazoCorrecao(), ctx.sol.id);
       // RN-06: devolução do PAE pelo professor gera parecer técnico justificado.
       if (ctx.sol.status === 'EM_ANALISE_ACADEMICA') {
         const tipo = user.perfil === 'PROFESSOR' ? 'TECNICO' : 'ACADEMICO';
@@ -143,6 +144,21 @@ const ACOES = {
       return R.regraCompletude(ctx);
     },
     destino: () => 'REENVIADO',
+    efeito: (conn, ctx) => conn.prepare('UPDATE solicitacao SET prazo_correcao = NULL WHERE id = ?').run(ctx.sol.id),
+  },
+
+  encerrar_prazo: {
+    rotulo: 'Encerrar por prazo expirado',
+    de: ['AGUARDANDO_CORRECAO'],
+    permitido: (user) => temPerfil(user, 'SECRETARIA'),
+    motivo: 'obrigatorio',
+    perigo: true,
+    bloqueios: (ctx) =>
+      R.prazoCorrecaoExpirado(ctx)
+        ? []
+        : [`O prazo de correção do aluno ainda não venceu${ctx.sol.prazo_correcao ? ` (vai até ${R.fmtDia(ctx.sol.prazo_correcao)})` : ''}.`],
+    destino: () => 'CANCELADO',
+    efeito: (conn, ctx) => conn.prepare('UPDATE solicitacao SET encerrada_em = ? WHERE id = ?').run(now(), ctx.sol.id),
   },
 
   parecer_tecnico: {
@@ -176,7 +192,7 @@ const ACOES = {
       const p = R.ultimoParecerTecnico(ctx);
       if (!p) return ['Aguardando parecer técnico do professor responsável.'];
       if (p.resultado !== 'FAVORAVEL') return ['O último parecer técnico não é favorável; devolva para ajustes ou indefira.'];
-      return [];
+      return R.regraPrazoInicio(ctx);
     },
     destino: () => 'AGUARDANDO_ASSINATURA',
     efeito: (conn, ctx, user, payload) => {
@@ -241,7 +257,7 @@ const ACOES = {
     permitido: (user) => temPerfil(user, 'DIRECAO'),
     motivo: 'opcional',
     rotuloMotivo: 'Observação',
-    bloqueios: R.regraAssinaturasAnteriores,
+    bloqueios: (ctx) => [...R.regraAssinaturasAnteriores(ctx), ...R.regraPrazoInicio(ctx)],
     destino: () => 'FORMALIZADO',
     efeito: (conn, ctx) => conn.prepare('UPDATE solicitacao SET ass_direcao = 1 WHERE id = ?').run(ctx.sol.id),
   },

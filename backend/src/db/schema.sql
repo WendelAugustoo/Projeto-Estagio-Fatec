@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS solicitacao (
   modalidade             TEXT    NOT NULL CHECK (modalidade IN ('REGULAR','EQUIVALENCIA','EQUIPARACAO')),
   status                 TEXT    NOT NULL DEFAULT 'RASCUNHO',
   retorno_status         TEXT,                           -- etapa que deve receber o reenvio após correção
+  prazo_correcao         TEXT,                           -- AAAA-MM-DD: data-limite para o aluno corrigir (definida na devolução)
   concedente_id          INTEGER REFERENCES concedente(id),
   professor_id           INTEGER REFERENCES usuario(id), -- professor responsável (definido pela Secretaria)
   tipo_atividade         TEXT,                           -- equiparação: IC, monitoria, pesquisa, extensão

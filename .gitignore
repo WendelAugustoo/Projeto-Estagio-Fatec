@@ -3,3 +3,4 @@ backend/data/
 backend/uploads/*.bin
 frontend/dist/
 .env
+.claude/

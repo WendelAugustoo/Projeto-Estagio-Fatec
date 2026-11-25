@@ -349,3 +349,74 @@ describe('Execução, horas e relatórios (RF-08, RN-09)', () => {
     assert.equal(r.status, 403);
   });
 });
+
+describe('Prazo expirado (exceção da seção 4.1)', () => {
+  const hoje = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const somar = (dia, n) => {
+    const d = new Date(dia + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+
+  test('envio de estágio regular com data de início vencida é bloqueado', async () => {
+    const conc = (await api('ana', 'GET', '/concedentes')).body[0].id;
+    const r = await api('ana', 'POST', '/solicitacoes', {
+      modalidade: 'REGULAR', concedente_id: conc,
+      plano: { descricao: 'x', tecnicas: 'y', compatibilidade: 'z', periodo_inicio: somar(hoje(), -1), periodo_fim: somar(hoje(), 120), horas_previstas: 200 },
+    });
+    await anexar('ana', r.body.id, 'TCE');
+    await anexar('ana', r.body.id, 'PAE');
+    const envio = await api('ana', 'POST', `/solicitacoes/${r.body.id}/enviar`, {});
+    assert.equal(envio.status, 422);
+    assert.ok(envio.body.error.details.some((d) => d.startsWith('Prazo expirado')), JSON.stringify(envio.body));
+    const det = (await api('ana', 'GET', `/solicitacoes/${r.body.id}`)).body;
+    assert.equal(det.prazos.inicio_expirado, true);
+    assert.ok(det.pendencias.some((p) => p.startsWith('Prazo expirado')));
+  });
+
+  test('início vencido em conferência: encaminhamento bloqueado e devolução define prazo de correção', async () => {
+    const id = solicitacaoDoAluno('aluno9@fatec.demo', 'EM_CONFERENCIA');
+    const lista = (await api('sec', 'GET', '/solicitacoes')).body;
+    assert.equal(lista.find((s) => s.id === id).prazo_expirado, true);
+    for (const d of (await api('sec', 'GET', `/solicitacoes/${id}`)).body.documentos) {
+      await api('sec', 'PATCH', `/documentos/${d.id}/conferencia`, { status: 'CONFERIDO' });
+    }
+    await api('sec', 'PATCH', `/solicitacoes/${id}/conferencia`, { seguro_situacao: 'CONTRATADO_CONCEDENTE', seguro_responsavel: 'Empresa' });
+    const profId = getDb().prepare("SELECT id FROM usuario WHERE email = 'professor@fatec.demo'").get().id;
+    const enc = await acao('sec', id, 'encaminhar_analise', { professor_id: profId });
+    assert.equal(enc.status, 422);
+    assert.ok(enc.body.error.details.some((d) => d.startsWith('Prazo expirado')));
+
+    assert.equal((await api('sec', 'POST', `/solicitacoes/${id}/devolver`, { motivo: 'Ajuste o período do estágio.' })).status, 200);
+    const det = (await api('sec', 'GET', `/solicitacoes/${id}`)).body;
+    assert.equal(det.solicitacao.prazo_correcao, somar(hoje(), 15));
+    assert.equal(det.prazos.correcao_expirada, false);
+    const cedo = await acao('sec', id, 'encerrar_prazo', { motivo: 'teste' });
+    assert.equal(cedo.status, 422, 'não encerra antes do vencimento');
+  });
+
+  test('prazo de correção vencido: Secretaria encerra com motivo e histórico', async () => {
+    const id = solicitacaoDoAluno('aluno8@fatec.demo', 'AGUARDANDO_CORRECAO');
+    const det = (await api('sec', 'GET', `/solicitacoes/${id}`)).body;
+    assert.equal(det.prazos.correcao_expirada, true);
+    assert.ok(det.pendencias.some((p) => p.startsWith('Prazo de correção expirado')));
+    const fila = (await api('sec', 'GET', '/solicitacoes?fila=1')).body;
+    assert.ok(fila.some((s) => s.id === id), 'aparece na fila da Secretaria');
+    assert.equal((await acao('ana', id, 'encerrar_prazo', { motivo: 'x' })).status, 404, 'aluno de outra solicitação não acessa');
+    assert.equal((await acao('sec', id, 'encerrar_prazo', {})).status, 400, 'exige motivo');
+    assert.equal((await acao('sec', id, 'encerrar_prazo', { motivo: 'Aluno não corrigiu no prazo de 15 dias.' })).status, 200);
+    const fim = (await api('sec', 'GET', `/solicitacoes/${id}`)).body;
+    assert.equal(fim.solicitacao.status, 'CANCELADO');
+    assert.equal(fim.historico.at(-1).acao, 'encerrar_prazo');
+    assert.equal(fim.historico.at(-1).motivo, 'Aluno não corrigiu no prazo de 15 dias.');
+  });
+
+  test('Direção não assina estágio com início vencido', async () => {
+    const id = solicitacaoDoAluno('aluno6@fatec.demo', 'ENVIADO');
+    getDb().prepare("UPDATE solicitacao SET status = 'AGUARDANDO_ASSINATURA', ass_aluno = 1, ass_concedente = 1, ass_coordenacao = 1 WHERE id = ?").run(id);
+    getDb().prepare('UPDATE plano_atividade SET periodo_inicio = ? WHERE solicitacao_id = ?').run(somar(hoje(), -2), id);
+    const r = await acao('dir', id, 'assinar');
+    assert.equal(r.status, 422);
+    assert.ok(r.body.error.details.some((d) => d.startsWith('Prazo expirado')));
+  });
+});
