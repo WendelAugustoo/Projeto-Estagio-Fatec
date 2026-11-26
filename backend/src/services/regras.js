@@ -82,7 +82,7 @@ function situacaoPrazos(ctx, hoje = hojeLocal()) {
 /** RN-01: matrícula irregular bloqueia estágio regular. */
 function regraMatricula(ctx) {
   if (ctx.sol.modalidade === 'REGULAR' && ctx.sol.situacao_matricula !== 'REGULAR') {
-    return ['Matrícula registrada como IRREGULAR. Regularize sua matrícula na Secretaria antes de enviar a solicitação de estágio regular (RN-01).'];
+    return ['Matrícula registrada como IRREGULAR. Regularize sua matrícula na Secretaria antes de enviar a solicitação de estágio regular.'];
   }
   return [];
 }
@@ -93,16 +93,16 @@ function regraDadosPlano(ctx) {
   const erros = [];
   if (sol.modalidade === 'REGULAR') {
     if (vazio(sol.concedente_id)) erros.push('Informe a empresa concedente.');
-    if (vazio(plano.descricao)) erros.push('PAE: descreva as atividades a serem desenvolvidas (RN-05).');
-    if (vazio(plano.tecnicas)) erros.push('PAE: informe as técnicas/ferramentas utilizadas (RN-05).');
-    if (vazio(plano.compatibilidade)) erros.push('PAE: justifique a compatibilidade das atividades com o curso (RN-05).');
-    if (vazio(plano.periodo_inicio) || vazio(plano.periodo_fim)) erros.push('PAE: informe o período de início e fim (RN-05).');
-    if (!(Number(plano.horas_previstas) > 0)) erros.push('PAE: informe a carga horária prevista (RN-05).');
+    if (vazio(plano.descricao)) erros.push('PAE: descreva as atividades a serem desenvolvidas.');
+    if (vazio(plano.tecnicas)) erros.push('PAE: informe as técnicas/ferramentas utilizadas.');
+    if (vazio(plano.compatibilidade)) erros.push('PAE: justifique a compatibilidade das atividades com o curso.');
+    if (vazio(plano.periodo_inicio) || vazio(plano.periodo_fim)) erros.push('PAE: informe o período de início e fim.');
+    if (!(Number(plano.horas_previstas) > 0)) erros.push('PAE: informe a carga horária prevista.');
   } else if (sol.modalidade === 'EQUIVALENCIA') {
-    if (vazio(sol.empresa_vinculo)) erros.push('Informe a empresa/empregador da experiência profissional (RN-11).');
-    if (vazio(plano.descricao)) erros.push('Informe a descrição técnica das atividades profissionais (RN-11).');
-    if (!(Number(plano.horas_previstas) > 0)) erros.push('Informe a carga horária a ser reconhecida (RN-11).');
-    if (vazio(plano.periodo_inicio)) erros.push('Informe o período da experiência profissional (RN-11).');
+    if (vazio(sol.empresa_vinculo)) erros.push('Informe a empresa/empregador da experiência profissional.');
+    if (vazio(plano.descricao)) erros.push('Informe a descrição técnica das atividades profissionais.');
+    if (!(Number(plano.horas_previstas) > 0)) erros.push('Informe a carga horária a ser reconhecida.');
+    if (vazio(plano.periodo_inicio)) erros.push('Informe o período da experiência profissional.');
   } else if (sol.modalidade === 'EQUIPARACAO') {
     if (vazio(sol.tipo_atividade)) erros.push('Informe o tipo de atividade acadêmica (IC, monitoria, pesquisa ou extensão).');
     if (vazio(sol.orientador_nome)) erros.push('Informe o professor orientador da atividade.');
@@ -140,7 +140,7 @@ function regraEstagioAnterior(ctx, outras) {
     (o) => o.id !== ctx.sol.id && o.modalidade === 'REGULAR' && o.status !== 'RASCUNHO' && !STATUS_FINAIS.includes(o.status)
   );
   if (ativa) {
-    return [`Já existe um estágio regular em andamento (${ativa.protocolo || '#' + ativa.id}). Um novo estágio regular só pode ser liberado após a conclusão do anterior com a documentação entregue (RN-10).`];
+    return [`Já existe um estágio regular em andamento (${ativa.protocolo || '#' + ativa.id}). Um novo estágio regular só pode ser liberado após a conclusão do anterior com a documentação entregue.`];
   }
   return [];
 }
@@ -158,10 +158,10 @@ function regraConferenciaDocumentos(ctx) {
 /** RN-08: seguro registrado pela Secretaria antes da análise do estágio regular. */
 function regraSeguro(ctx) {
   if (ctx.sol.modalidade === 'REGULAR' && ctx.sol.seguro_situacao === 'NAO_INFORMADO') {
-    return ['Registre a situação do seguro contra acidentes pessoais e o responsável pela contratação (RN-08).'];
+    return ['Registre a situação do seguro contra acidentes pessoais e o responsável pela contratação.'];
   }
   if (ctx.sol.modalidade === 'REGULAR' && ctx.sol.seguro_situacao !== 'NAO_APLICAVEL' && vazio(ctx.sol.seguro_responsavel)) {
-    return ['Informe o responsável pela contratação do seguro (RN-08).'];
+    return ['Informe o responsável pela contratação do seguro.'];
   }
   return [];
 }
@@ -172,7 +172,7 @@ function regraAssinaturasAnteriores(ctx) {
   if (!ctx.sol.ass_aluno) erros.push('Assinatura do aluno no TCE ainda não registrada pela Secretaria.');
   if (!ctx.sol.ass_concedente) erros.push('Assinatura da concedente no TCE ainda não registrada pela Secretaria.');
   if (!ctx.sol.ass_coordenacao) erros.push('Validação/assinatura da Coordenação ainda não registrada.');
-  if (erros.length) erros.push('A Direção assina por último, após a conferência das assinaturas anteriores (RN-07).');
+  if (erros.length) erros.push('A Direção assina por último, após a conferência das assinaturas anteriores.');
   return erros;
 }
 
@@ -197,9 +197,9 @@ function regraRelatoriosParaAvaliacao(ctx) {
   const exigidos = parciaisExigidos(ctx.plano);
   const parciais = relatoriosValidos(ctx, 'PARCIAL').length;
   if (parciais < exigidos) {
-    erros.push(`São exigidos ${exigidos} relatório(s) parcial(is) para este período (intervalo máximo de seis meses); enviado(s): ${parciais} (RN-09).`);
+    erros.push(`São exigidos ${exigidos} relatório(s) parcial(is) para este período (intervalo máximo de seis meses); enviado(s): ${parciais}.`);
   }
-  if (!relatoriosValidos(ctx, 'FINAL').length) erros.push('Envie o relatório final antes de solicitar a avaliação final (RN-09).');
+  if (!relatoriosValidos(ctx, 'FINAL').length) erros.push('Envie o relatório final antes de solicitar a avaliação final.');
   if (!ctx.horas.length) erros.push('Registre as horas de estágio executadas.');
   return erros;
 }
@@ -249,7 +249,7 @@ function pendencias(ctx, hoje = hojeLocal()) {
   if (sol.status === 'EM_EXECUCAO' && !vazio(ctx.plano.periodo_inicio)) {
     const dias = diasEntre(ctx.plano.periodo_inicio, hoje);
     const venceram = Math.min(Math.floor(dias / SEIS_MESES_DIAS), parciaisExigidos(ctx.plano));
-    if (relatoriosValidos(ctx, 'PARCIAL').length < venceram) lista.push('Relatório parcial vencido: envie o relatório periódico (intervalo máximo de seis meses — RN-09).');
+    if (relatoriosValidos(ctx, 'PARCIAL').length < venceram) lista.push('Relatório parcial vencido: envie o relatório periódico (intervalo máximo de seis meses).');
     if (prazoRelatorioFinalExpirado(ctx, hoje)) {
       lista.push(`Prazo expirado: o período do estágio terminou em ${fmtDia(ctx.plano.periodo_fim)} e o relatório final ainda não foi enviado.`);
     } else if (hoje === ctx.plano.periodo_fim && !relatoriosValidos(ctx, 'FINAL').length) {

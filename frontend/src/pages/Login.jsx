@@ -88,9 +88,6 @@ export default function Login() {
             ))}
           </ul>
         </details>
-        <p className="aviso-rodape">
-          Protótipo acadêmico com dados fictícios. Não substitui SEI, assinatura eletrônica oficial, portal acadêmico ou deliberações da CESU.
-        </p>
       </main>
     </div>
   );

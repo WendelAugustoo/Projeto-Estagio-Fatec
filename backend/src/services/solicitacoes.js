@@ -206,8 +206,8 @@ function validarReferencias(campos) {
 function criar(user, body) {
   const aluno = alunoDoUsuario(user.id);
   // RN-02: modalidade e curso identificados antes de abrir a solicitação.
-  if (!C.MODALIDADES[body.modalidade]) throw badRequest('Selecione a modalidade da solicitação (RN-02).');
-  if (!aluno.curso_id) throw businessRule('Seu cadastro não possui curso vinculado (RN-02).');
+  if (!C.MODALIDADES[body.modalidade]) throw badRequest('Selecione a modalidade da solicitação.');
+  if (!aluno.curso_id) throw businessRule('Seu cadastro não possui curso vinculado.');
   const campos = camposEditaveis(body);
   validarReferencias(campos);
 

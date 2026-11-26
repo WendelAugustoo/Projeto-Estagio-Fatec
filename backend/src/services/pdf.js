@@ -81,7 +81,7 @@ function gerarPdf(ctx, usuario, stream) {
   }
 
   doc.moveDown(1.5).fontSize(8).fillColor('#64748b').text(
-    `Gerado em ${fmtData(new Date().toISOString())} por ${usuario.nome}. Documento demonstrativo de projeto acadêmico: não substitui SEI, assinatura eletrônica oficial ou deliberação da CESU/Fatec (RN-16).`,
+    `Gerado em ${fmtData(new Date().toISOString())} por ${usuario.nome}. Documento demonstrativo de projeto acadêmico: não substitui SEI, assinatura eletrônica oficial ou deliberação da CESU/Fatec.`,
     { align: 'center' }
   );
   doc.end();

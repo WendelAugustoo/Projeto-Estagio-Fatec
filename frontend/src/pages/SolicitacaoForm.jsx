@@ -106,12 +106,12 @@ export default function SolicitacaoForm() {
 
         {equiparacaoSemPpc && (
           <div className="alerta alerta-aviso" role="status">
-            O PPC do seu curso não prevê equiparação de atividades acadêmicas. A solicitação pode ser registrada, mas não poderá ser deferida automaticamente (RN-12).
+            O PPC do seu curso não prevê equiparação de atividades acadêmicas. A solicitação pode ser registrada, mas não poderá ser deferida automaticamente.
           </div>
         )}
         {m === 'REGULAR' && usuario.aluno?.situacao_matricula === 'IRREGULAR' && (
           <div className="alerta alerta-aviso" role="status">
-            Sua matrícula consta como irregular: o envio do estágio regular ficará bloqueado até a regularização (RN-01).
+            Sua matrícula consta como irregular: o envio do estágio regular ficará bloqueado até a regularização.
           </div>
         )}
 

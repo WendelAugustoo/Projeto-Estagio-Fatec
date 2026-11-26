@@ -213,11 +213,11 @@ const ACOES = {
       const erros = [];
       const solicitadas = Number(ctx.plano.horas_previstas || 0);
       if (!['DEFERIDO', 'DEFERIDO_PARCIAL', 'INDEFERIDO'].includes(payload.resultado)) {
-        erros.push('Informe o resultado: deferido integralmente, parcialmente ou indeferido (RN-13).');
+        erros.push('Informe o resultado: deferido integralmente, parcialmente ou indeferido.');
       }
       // RN-12 / CA-07: equiparação só pode ser deferida se prevista no PPC do curso.
       if (ctx.sol.modalidade === 'EQUIPARACAO' && !ctx.sol.permite_equiparacao && payload.resultado !== 'INDEFERIDO') {
-        erros.push(`O PPC do curso ${ctx.sol.curso_nome} não prevê equiparação de atividades acadêmicas. O deferimento automático está bloqueado: a solicitação deve ser indeferida ou tratada pela regra institucional (RN-12).`);
+        erros.push(`O PPC do curso ${ctx.sol.curso_nome} não prevê equiparação de atividades acadêmicas. O deferimento automático está bloqueado: a solicitação deve ser indeferida ou tratada pela regra institucional.`);
       }
       if (payload.resultado === 'DEFERIDO_PARCIAL') {
         const h = Number(payload.horas_reconhecidas);

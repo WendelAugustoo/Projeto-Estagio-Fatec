@@ -223,14 +223,14 @@ describe('Critérios de aceite', () => {
     await anexar('ana', r.body.id, 'PAE');
     const envio = await api('ana', 'POST', `/solicitacoes/${r.body.id}/enviar`, {});
     assert.equal(envio.status, 422);
-    assert.ok(envio.body.error.details.some((d) => d.includes('RN-10')));
+    assert.ok(envio.body.error.details.some((d) => d.includes('Já existe um estágio regular em andamento')));
   });
 
   test('CA-07: equiparação sem previsão no PPC não pode ser deferida', async () => {
     const id = solicitacaoDoAluno('aluno2@fatec.demo', 'EM_ANALISE_ACADEMICA');
     const r = await api('coord', 'POST', `/solicitacoes/${id}/pareceres`, { resultado: 'DEFERIDO', motivo: 'ok' });
     assert.equal(r.status, 422);
-    assert.ok(r.body.error.details.some((d) => d.includes('RN-12')));
+    assert.ok(r.body.error.details.some((d) => d.includes('não prevê equiparação')));
     assert.equal((await api('carla', 'GET', `/solicitacoes/${id}`)).body.solicitacao.status, 'EM_ANALISE_ACADEMICA');
   });
 

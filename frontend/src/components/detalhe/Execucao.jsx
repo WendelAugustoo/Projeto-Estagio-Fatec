@@ -47,7 +47,7 @@ export default function Execucao({ dados, aoAtualizar }) {
         <div className="progresso" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Percentual de horas validadas">
           <div style={{ width: `${pct}%` }} />
         </div>
-        {r.parciais_exigidos > 0 && <small className="ajuda">Este período exige {r.parciais_exigidos} relatório(s) parcial(is) — intervalo máximo de seis meses (RN-09).</small>}
+        {r.parciais_exigidos > 0 && <small className="ajuda">Este período exige {r.parciais_exigidos} relatório(s) parcial(is) — intervalo máximo de seis meses.</small>}
       </div>
       <ErroBox erro={erro} />
 

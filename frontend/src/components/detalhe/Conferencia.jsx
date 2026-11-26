@@ -42,7 +42,7 @@ export default function Conferencia({ dados, aoAtualizar }) {
   return (
     <section className="cartao" aria-labelledby="titulo-conf">
       <h2 id="titulo-conf">Formalização do TCE</h2>
-      <p className="ajuda">Registro acadêmico das etapas de assinatura — sem valor de assinatura oficial. A Direção assina por último (RN-07).</p>
+      <p className="ajuda">Registro acadêmico das etapas de assinatura — sem valor de assinatura oficial. A Direção assina por último.</p>
       <ol className="assinaturas">
         {assinaturas.map(([nome, ok]) => (
           <li key={nome} className={ok ? 'ok' : ''}>
