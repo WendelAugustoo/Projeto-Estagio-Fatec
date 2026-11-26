@@ -2,8 +2,6 @@
 
 Protótipo funcional de aplicação web para acompanhar processos de **estágio regular**, **equivalência** (experiência profissional) e **equiparação** (atividades acadêmicas), tomando como referência o fluxo documental do Manual para Estágio Supervisionado da CESU/Centro Paula Souza (v2.0.0).
 
-> **Projeto acadêmico demonstrativo.** Não substitui SEI, assinatura eletrônica oficial, portal acadêmico, deliberações da CESU ou processo de aprovação institucional. Todos os dados de exemplo são fictícios. O desenvolvimento deste sistema, por si só, não gera dispensa de estágio.
-
 ---
 
 ## Sumário
